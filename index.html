@@ -556,6 +556,75 @@
     }
 
     // ==================== 会议详情 ====================
+    function VirtualBg(props) {
+      var backgrounds = [
+        { id: "none", name: "无", preview: "linear-gradient(135deg, #f5f5f7, #e5e5ea)" },
+        { id: "office", name: "办公室", preview: "linear-gradient(135deg, #007AFF, #5856D6)" },
+        { id: "home", name: "家庭", preview: "linear-gradient(135deg, #FF9500, #FFCC00)" },
+        { id: "nature", name: "自然", preview: "linear-gradient(135deg, #34C759, #30D158)" },
+        { id: "blur", name: "模糊", preview: "linear-gradient(135deg, #8E8E93, #636366)" },
+        { id: "custom", name: "自定义", preview: "linear-gradient(135deg, #AF52DE, #BF5AF2)" },
+      ];
+      return (<div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {backgrounds.map(function(bg) { return (
+            <div key={bg.id} onClick={function(){ props.setSelected(bg.id); props.showToast("已切换背景：" + bg.name); }} style={{ cursor: "pointer", borderRadius: 14, overflow: "hidden", border: props.selected === bg.id ? "3px solid var(--apple-blue)" : "3px solid transparent", transition: "all 0.3s", position: "relative" }}>
+              <div style={{ height: 80, background: bg.preview, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20 }}>{bg.id === "none" ? <i className="ri-close-line" style={{color:"#8E8E93"}}></i> : bg.id === "blur" ? <i className="ri-blur-off-line"></i> : bg.id === "custom" ? <i className="ri-upload-line"></i> : <i className="ri-landscape-line"></i>}</div>
+              <div style={{ textAlign: "center", padding: "6px 0", fontSize: 12, fontWeight: 600, background: "#fff" }}>{bg.name}{props.selected === bg.id && <i className="ri-check-line" style={{ color: "var(--apple-blue)", marginLeft: 4 }}></i>}</div>
+            </div>
+          ); })}
+        </div>
+        <div style={{ marginTop: 14, padding: 12, borderRadius: 12, background: "rgba(0,122,255,0.06)", fontSize: 13, color: "var(--apple-text2)", display: "flex", alignItems: "center", gap: 8 }}><i className="ri-information-line" style={{ color: "var(--apple-blue)" }}></i> 选择背景后将在视频会议中实时生效</div>
+      </div>);
+    }
+    function RecordingPlayer(props) {
+      var markers = [
+        { time: "00:00", label: "会议开始 - 开场介绍", color: "#007AFF" },
+        { time: "14:23", label: "产品路线图讨论", color: "#AF52DE" },
+        { time: "32:15", label: "技术架构评审", color: "#34C759" },
+        { time: "58:40", label: "预算分配讨论", color: "#FF9500" },
+        { time: "1:28:00", label: "决议确认与总结", color: "#FF3B30" },
+      ];
+      var currentMin = Math.floor(props.progress * 102 / 100);
+      var currentSec = Math.floor(props.progress * 62 % 60);
+      return (<div>
+        <div style={{ background: "#1d1d1f", borderRadius: 16, overflow: "hidden" }}>
+          <div style={{ padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: props.playing ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.3s" }} onClick={function(){ props.setPlaying(!props.playing); }}>
+              <i className={props.playing ? "ri-pause-line" : "ri-play-fill"} style={{ fontSize: 32, color: "#fff", marginLeft: props.playing ? 0 : 4 }}></i>
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 12 }}>产品规划评审会录制 · 1小时42分</div>
+          </div>
+          <div style={{ padding: "0 24px 20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>
+              <span>{currentMin}:{currentSec < 10 ? "0" + currentSec : currentSec}</span>
+              <span>1:42:00</span>
+            </div>
+            <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", cursor: "pointer", position: "relative" }} onClick={function(e){ var rect = e.currentTarget.getBoundingClientRect(); var pct = Math.round((e.clientX - rect.left) / rect.width * 100); props.setProgress(pct); }}>
+              <div style={{ height: "100%", borderRadius: 2, background: "var(--apple-blue)", width: props.progress + "%", transition: "width 0.2s" }}></div>
+              <div style={{ position: "absolute", top: -4, left: props.progress + "%", width: 12, height: 12, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", transform: "translateX(-50%)", transition: "left 0.2s" }}></div>
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "var(--apple-text2)" }}>关键节点</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {markers.map(function(m, i) { return (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 12, background: "#f5f5f7", cursor: "pointer" }} onClick={function(){ props.setProgress(parseInt(m.time.split(":")[0]) * 60 / 102 * 100); props.showToast("跳转到 " + m.time); }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: m.color, flexShrink: 0 }}></div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: m.color, fontFamily: "monospace", minWidth: 52 }}>{m.time}</span>
+                <span style={{ fontSize: 13, color: "var(--apple-text2)" }}>{m.label}</span>
+              </div>
+            ); })}
+          </div>
+        </div>
+        <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
+          <button className="apple-btn apple-btn-secondary" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ props.showToast("已生成AI摘要"); }}><i className="ri-magic-line"></i> AI摘要</button>
+          <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ props.showToast("已分享给团队成员"); }}><i className="ri-share-line"></i> 分享</button>
+          <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ props.showToast("已导出为文档"); }}><i className="ri-file-text-line"></i> 导出纪要</button>
+        </div>
+      </div>);
+    }
     function MeetingDetailPage() {
       var router = useRouter();
       var meetingId = parseInt(router.params.id) || 1;
@@ -567,6 +636,10 @@
       var [docs, setDocs] = useState(documentsData.filter(function(d) { return d.meeting_id === meetingId; }));
       var [todoList, setTodoList] = useState(todosData.filter(function(t) { return t.meeting_id === meetingId; }));
       var [resList, setResList] = useState(resolutionsData.filter(function(r) { return r.meeting_id === meetingId; }));
+      var [bgSelected, setBgSelected] = useState("office");
+      var [ccOn, setCcOn] = useState(true);
+      var [playing, setPlaying] = useState(false);
+      var [playProgress, setPlayProgress] = useState(35);
       var meetingConflicts = conflictsData.filter(function(c) { return c.meeting_id === meetingId; });
       var st = { upcoming: { label: "待开始", pill: "pill-blue" }, ongoing: { label: "进行中", pill: "pill-orange" }, ended: { label: "已结束", pill: "pill-gray" } }[meeting.status];
       var tabs = [{ id: "pre", label: "会前准备", icon: "ri-file-list-3-line" }, { id: "during", label: "会中辅助", icon: "ri-record-circle-line" }, { id: "post", label: "会后跟进", icon: "ri-task-line" }];
@@ -702,29 +775,7 @@
                     <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,149,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-orange)", fontSize: 18 }}><i className="ri-image-line"></i></div>
                     <h3 style={{ fontSize: 17, fontWeight: 600 }}>虚拟背景</h3>
                   </div>
-                  {function() {
-                    var bgSelected = useState("office");
-                    var selected = bgSelected[0]; var setSelected = bgSelected[1];
-                    var backgrounds = [
-                      { id: "none", name: "无", preview: "linear-gradient(135deg, #f5f5f7, #e5e5ea)" },
-                      { id: "office", name: "办公室", preview: "linear-gradient(135deg, #007AFF, #5856D6)" },
-                      { id: "home", name: "家庭", preview: "linear-gradient(135deg, #FF9500, #FFCC00)" },
-                      { id: "nature", name: "自然", preview: "linear-gradient(135deg, #34C759, #30D158)" },
-                      { id: "blur", name: "模糊", preview: "linear-gradient(135deg, #8E8E93, #636366)" },
-                      { id: "custom", name: "自定义", preview: "linear-gradient(135deg, #AF52DE, #BF5AF2)" },
-                    ];
-                    return (<div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                        {backgrounds.map(function(bg) { return (
-                          <div key={bg.id} onClick={function(){ setSelected(bg.id); showToast("已切换背景：" + bg.name); }} style={{ cursor: "pointer", borderRadius: 14, overflow: "hidden", border: selected === bg.id ? "3px solid var(--apple-blue)" : "3px solid transparent", transition: "all 0.3s", position: "relative" }}>
-                            <div style={{ height: 80, background: bg.preview, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20 }}>{bg.id === "none" ? <i className="ri-close-line" style={{color:"#8E8E93"}}></i> : bg.id === "blur" ? <i className="ri-blur-off-line"></i> : bg.id === "custom" ? <i className="ri-upload-line"></i> : <i className="ri-landscape-line"></i>}</div>
-                            <div style={{ textAlign: "center", padding: "6px 0", fontSize: 12, fontWeight: 600, background: "#fff" }}>{bg.name}{selected === bg.id && <i className="ri-check-line" style={{ color: "var(--apple-blue)", marginLeft: 4 }}></i>}</div>
-                          </div>
-                        ); })}
-                      </div>
-                      <div style={{ marginTop: 14, padding: 12, borderRadius: 12, background: "rgba(0,122,255,0.06)", fontSize: 13, color: "var(--apple-text2)", display: "flex", alignItems: "center", gap: 8 }}><i className="ri-information-line" style={{ color: "var(--apple-blue)" }}></i> 选择背景后将在视频会议中实时生效</div>
-                    </div>);
-                  }()}
+                  <VirtualBg selected={bgSelected} setSelected={setBgSelected} showToast={showToast} />
                 </div>
               </div>
 
@@ -759,11 +810,7 @@
                 <div className="card-flat" style={{ padding: 28 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(52,199,89,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-green)", fontSize: 18 }}><i className="ri-closed-captioning-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>实时字幕</h3></div>
-                    {function() {
-                      var ccState = useState(true);
-                      var ccOn = ccState[0]; var setCc = ccState[1];
-                      return <button className={"apple-btn " + (ccOn ? "apple-btn-primary" : "apple-btn-secondary")} onClick={function(){ setCc(!ccOn); showToast(ccOn ? "字幕已关闭" : "字幕已开启"); }} style={{ padding: "8px 18px", fontSize: 14 }}><i className={ccOn ? "ri-eye-line" : "ri-eye-off-line"}></i> {ccOn ? "开启" : "关闭"}</button>;
-                    }()}
+                    <button className={"apple-btn " + (ccOn ? "apple-btn-primary" : "apple-btn-secondary")} onClick={function(){ setCcOn(!ccOn); showToast(ccOn ? "字幕已关闭" : "字幕已开启"); }} style={{ padding: "8px 18px", fontSize: 14 }}><i className={ccOn ? "ri-eye-line" : "ri-eye-off-line"}></i> {ccOn ? "开启" : "关闭"}</button>
                   </div>
                   <div style={{ background: "#1d1d1f", borderRadius: 16, padding: 20, minHeight: 180, position: "relative", overflow: "hidden" }}>
                     <div style={{ position: "absolute", top: 10, right: 12, display: "flex", gap: 6 }}>
@@ -810,58 +857,7 @@
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(175,82,222,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-purple)", fontSize: 18 }}><i className="ri-play-circle-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>录制回放</h3></div>
                   <button className="apple-btn apple-btn-secondary" onClick={function(){ showToast("录制文件已下载"); }}><i className="ri-download-line"></i> 下载</button>
                 </div>
-                {function() {
-                  var playState = useState(false);
-                  var playing = playState[0]; var setPlaying = playState[1];
-                  var progressState = useState(35);
-                  var progress = progressState[0]; var setProgress = progressState[1];
-                  return (<div>
-                    {/* 播放器 */}
-                    <div style={{ background: "#1d1d1f", borderRadius: 16, overflow: "hidden" }}>
-                      <div style={{ padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                        <div style={{ width: 64, height: 64, borderRadius: "50%", background: playing ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.3s" }} onClick={function(){ setPlaying(!playing); }}>
-                          <i className={playing ? "ri-pause-line" : "ri-play-fill"} style={{ fontSize: 32, color: "#fff", marginLeft: playing ? 0 : 4 }}></i>
-                        </div>
-                        <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 12 }}>产品规划评审会录制 · 1小时42分</div>
-                      </div>
-                      {/* 进度条 */}
-                      <div style={{ padding: "0 24px 20px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>
-                          <span>{Math.floor(progress * 102 / 100)}:{(progress * 62 % 60 < 10 ? "0" : "") + Math.floor(progress * 62 % 60)}</span>
-                          <span>1:42:00</span>
-                        </div>
-                        <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", cursor: "pointer", position: "relative" }} onClick={function(e){ var rect = e.currentTarget.getBoundingClientRect(); var pct = Math.round((e.clientX - rect.left) / rect.width * 100); setProgress(pct); }}>
-                          <div style={{ height: "100%", borderRadius: 2, background: "var(--apple-blue)", width: progress + "%", transition: "width 0.2s" }}></div>
-                          <div style={{ position: "absolute", top: -4, left: progress + "%", width: 12, height: 12, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", transform: "translateX(-50%)", transition: "left 0.2s" }}></div>
-                        </div>
-                      </div>
-                    </div>
-                    {/* 时间线标注 */}
-                    <div style={{ marginTop: 16 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "var(--apple-text2)" }}>关键节点</div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {[
-                          { time: "00:00", label: "会议开始 - 开场介绍", color: "#007AFF" },
-                          { time: "14:23", label: "产品路线图讨论", color: "#AF52DE" },
-                          { time: "32:15", label: "技术架构评审", color: "#34C759" },
-                          { time: "58:40", label: "预算分配讨论", color: "#FF9500" },
-                          { time: "1:28:00", label: "决议确认与总结", color: "#FF3B30" },
-                        ].map(function(m, i) { return (
-                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 12, background: "#f5f5f7", cursor: "pointer" }} onClick={function(){ setProgress(parseInt(m.time.split(":")[0]) * 60 / 102 * 100); showToast("跳转到 " + m.time); }}>
-                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: m.color, flexShrink: 0 }}></div>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: m.color, fontFamily: "monospace", minWidth: 52 }}>{m.time}</span>
-                            <span style={{ fontSize: 13, color: "var(--apple-text2)" }}>{m.label}</span>
-                          </div>
-                        ); })}
-                      </div>
-                    </div>
-                    <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
-                      <button className="apple-btn apple-btn-secondary" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("已生成AI摘要"); }}><i className="ri-magic-line"></i> AI摘要</button>
-                      <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("已分享给团队成员"); }}><i className="ri-share-line"></i> 分享</button>
-                      <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("已导出为文档"); }}><i className="ri-file-text-line"></i> 导出纪要</button>
-                    </div>
-                  </div>);
-                }()}
+                <RecordingPlayer playing={playing} setPlaying={setPlaying} progress={playProgress} setProgress={setPlayProgress} showToast={showToast} />
               </div>
 
               {/* 议题进度 */}
