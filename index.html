@@ -56,7 +56,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    const { useState, useEffect, useRef, createContext, useContext } = React;
+    const { useState, useEffect, useRef, createContext, useContext, useCallback } = React;
 
     // ==================== 数据 ====================
     const usersDB = [
@@ -378,7 +378,10 @@
                       <div style={{ fontSize: 20, fontWeight: 700 }}>{ongoingMeeting.title}</div>
                     </div>
                   </div>
-                  <span className="apple-pill pill-orange">进行中</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button className="apple-btn apple-btn-primary" onClick={function(e) { e.stopPropagation(); showToast("正在加入会议..."); }} style={{ background: "#34C759", padding: "8px 20px", fontSize: 14 }}><i className="ri-video-chat-line"></i> 一键入会</button>
+                    <span className="apple-pill pill-orange">进行中</span>
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 24, fontSize: 14, color: "rgba(255,255,255,0.5)", marginTop: 12 }}>
                   <span><i className="ri-time-line" style={{ marginRight: 6 }}></i>{new Date(ongoingMeeting.start_time).toLocaleString("zh-CN", { hour: "2-digit", minute: "2-digit" })} - {new Date(ongoingMeeting.end_time).toLocaleString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span>
@@ -620,14 +623,248 @@
 
             {/* 会中 */}
             {tab === "during" && (<div className="animate-fadeUp" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {/* 一键入会 */}
+              <div className="card-flat" style={{ padding: 28, background: "linear-gradient(135deg, #1d1d1f, #2c2c2e)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 18, background: "linear-gradient(135deg, #34C759, #30D158)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 24, boxShadow: "0 4px 16px rgba(52,199,89,0.4)" }}><i className="ri-video-chat-line"></i></div>
+                    <div>
+                      <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>视频会议</h3>
+                      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{meeting.location}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button className="apple-btn" onClick={function(){ showToast("正在打开会议链接..."); }} style={{ background: "#34C759", color: "#fff", padding: "12px 28px", fontSize: 16, fontWeight: 600, boxShadow: "0 4px 16px rgba(52,199,89,0.4)" }}><i className="ri-video-on-line"></i> 一键入会</button>
+                    <button className="apple-btn" onClick={function(){ showToast("已复制会议邀请链接"); }} style={{ background: "rgba(255,255,255,0.12)", color: "#fff", padding: "12px 20px" }}><i className="ri-link"></i> 复制链接</button>
+                  </div>
+                </div>
+                {meeting.status === "ongoing" && <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16, padding: "10px 16px", borderRadius: 12, background: "rgba(255,59,48,0.15)" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF3B30", animation: "fadeUp 1.5s infinite" }}></div>
+                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>会议进行中 · 已持续 1小时23分 · 3人在线</span>
+                </div>}
+              </div>
+
+              {/* 设备检测 */}
+              <div className="card-flat" style={{ padding: 28 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,122,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-blue)", fontSize: 18 }}><i className="ri-computer-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>设备检测</h3></div>
+                  <button className="apple-btn apple-btn-secondary" onClick={function(){ showToast("设备检测通过，一切正常！"); }}><i className="ri-refresh-line"></i> 重新检测</button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+                  {[
+                    { icon: "ri-camera-line", label: "摄像头", status: "正常", ok: true, detail: "1080p HD" },
+                    { icon: "ri-mic-line", label: "麦克风", status: "正常", ok: true, detail: "音量 85%" },
+                    { icon: "ri-speaker-line", label: "扬声器", status: "正常", ok: true, detail: "音量 70%" },
+                    { icon: "ri-wifi-line", label: "网络", status: "良好", ok: true, detail: "延迟 23ms" },
+                  ].map(function(d, i) { return (
+                    <div key={i} style={{ padding: 18, borderRadius: 16, background: d.ok ? "rgba(52,199,89,0.06)" : "rgba(255,59,48,0.06)", display: "flex", alignItems: "center", gap: 14 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 14, background: d.ok ? "rgba(52,199,89,0.12)" : "rgba(255,59,48,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: d.ok ? "var(--apple-green)" : "var(--apple-red)", fontSize: 20 }}><i className={d.icon}></i></div>
+                      <div><div style={{ fontWeight: 600, fontSize: 15 }}>{d.label}</div><div style={{ fontSize: 12, color: "var(--apple-text2)", marginTop: 2 }}>{d.detail}</div></div>
+                      <div style={{ marginLeft: "auto" }}><span className={"apple-pill " + (d.ok ? "pill-green" : "pill-red")}><i className={d.ok ? "ri-check-line" : "ri-close-line"}></i> {d.status}</span></div>
+                    </div>
+                  ); })}
+                </div>
+              </div>
+
+              {/* 实时参会面板 + 虚拟背景 两栏 */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                {/* 实时参会面板 */}
+                <div className="card-flat" style={{ padding: 28 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(175,82,222,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-purple)", fontSize: 18 }}><i className="ri-team-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>参会面板</h3></div>
+                    <span className="apple-pill pill-green"><i className="ri-user-line"></i> 3/4 在线</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {[
+                      { name: "张三", avatar: "张", color: "#007AFF", online: true, speaking: true, role: "产品经理" },
+                      { name: "李四", avatar: "李", color: "#AF52DE", online: true, speaking: false, role: "架构师" },
+                      { name: "王五", avatar: "王", color: "#FF9500", online: true, speaking: false, role: "设计主管" },
+                      { name: "赵六", avatar: "赵", color: "#34C759", online: false, speaking: false, role: "运营总监" },
+                    ].map(function(p, i) { return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, background: p.online ? (p.speaking ? "rgba(0,122,255,0.06)" : "#f5f5f7") : "rgba(0,0,0,0.02)", opacity: p.online ? 1 : 0.5, transition: "all 0.3s" }}>
+                        <div style={{ position: "relative" }}>
+                          <div style={{ width: 40, height: 40, borderRadius: "50%", background: p.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 16 }}>{p.avatar}</div>
+                          {p.online && <div style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: p.speaking ? "var(--apple-blue)" : "var(--apple-green)", border: "2px solid #fff" }}></div>}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontWeight: 600, fontSize: 15 }}>{p.name}</span>{p.speaking && <span className="apple-pill pill-blue" style={{ fontSize: 10, padding: "2px 8px" }}><i className="ri-volume-up-line"></i> 发言中</span>}</div>
+                          <div style={{ fontSize: 12, color: "var(--apple-text2)", marginTop: 2 }}>{p.online ? p.role : "未入会"}</div>
+                        </div>
+                        {!p.online && <button className="apple-btn apple-btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }} onClick={function(){ showToast("已发送入会提醒给" + p.name); }}><i className="ri-notification-line"></i> 提醒</button>}
+                      </div>
+                    ); })}
+                  </div>
+                </div>
+
+                {/* 虚拟背景 */}
+                <div className="card-flat" style={{ padding: 28 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,149,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-orange)", fontSize: 18 }}><i className="ri-image-line"></i></div>
+                    <h3 style={{ fontSize: 17, fontWeight: 600 }}>虚拟背景</h3>
+                  </div>
+                  {function() {
+                    var bgSelected = useState("office");
+                    var selected = bgSelected[0]; var setSelected = bgSelected[1];
+                    var backgrounds = [
+                      { id: "none", name: "无", preview: "linear-gradient(135deg, #f5f5f7, #e5e5ea)" },
+                      { id: "office", name: "办公室", preview: "linear-gradient(135deg, #007AFF, #5856D6)" },
+                      { id: "home", name: "家庭", preview: "linear-gradient(135deg, #FF9500, #FFCC00)" },
+                      { id: "nature", name: "自然", preview: "linear-gradient(135deg, #34C759, #30D158)" },
+                      { id: "blur", name: "模糊", preview: "linear-gradient(135deg, #8E8E93, #636366)" },
+                      { id: "custom", name: "自定义", preview: "linear-gradient(135deg, #AF52DE, #BF5AF2)" },
+                    ];
+                    return (<div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                        {backgrounds.map(function(bg) { return (
+                          <div key={bg.id} onClick={function(){ setSelected(bg.id); showToast("已切换背景：" + bg.name); }} style={{ cursor: "pointer", borderRadius: 14, overflow: "hidden", border: selected === bg.id ? "3px solid var(--apple-blue)" : "3px solid transparent", transition: "all 0.3s", position: "relative" }}>
+                            <div style={{ height: 80, background: bg.preview, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20 }}>{bg.id === "none" ? <i className="ri-close-line" style={{color:"#8E8E93"}}></i> : bg.id === "blur" ? <i className="ri-blur-off-line"></i> : bg.id === "custom" ? <i className="ri-upload-line"></i> : <i className="ri-landscape-line"></i>}</div>
+                            <div style={{ textAlign: "center", padding: "6px 0", fontSize: 12, fontWeight: 600, background: "#fff" }}>{bg.name}{selected === bg.id && <i className="ri-check-line" style={{ color: "var(--apple-blue)", marginLeft: 4 }}></i>}</div>
+                          </div>
+                        ); })}
+                      </div>
+                      <div style={{ marginTop: 14, padding: 12, borderRadius: 12, background: "rgba(0,122,255,0.06)", fontSize: 13, color: "var(--apple-text2)", display: "flex", alignItems: "center", gap: 8 }}><i className="ri-information-line" style={{ color: "var(--apple-blue)" }}></i> 选择背景后将在视频会议中实时生效</div>
+                    </div>);
+                  }()}
+                </div>
+              </div>
+
+              {/* 会中截图 + 实时字幕 两栏 */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                {/* 会中截图 */}
+                <div className="card-flat" style={{ padding: 28 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,149,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-orange)", fontSize: 18 }}><i className="ri-screenshot-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>会中截图</h3></div>
+                    <button className="apple-btn apple-btn-primary" onClick={function(){ showToast("截图已保存！"); }} style={{ padding: "8px 18px", fontSize: 14 }}><i className="ri-camera-line"></i> 截图</button>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {[
+                      { time: "14:23", label: "产品路线图讨论", color: "#007AFF" },
+                      { time: "14:45", label: "架构方案对比", color: "#AF52DE" },
+                      { time: "15:02", label: "预算分配表格", color: "#FF9500" },
+                    ].map(function(s, i) { return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: 14, borderRadius: 14, background: "#f5f5f7", cursor: "pointer" }} onClick={function(){ showToast("打开截图：" + s.label); }}>
+                        <div style={{ width: 52, height: 36, borderRadius: 8, background: "linear-gradient(135deg, " + s.color + ", " + s.color + "88)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 16, flexShrink: 0 }}><i className="ri-image-line"></i></div>
+                        <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: 14 }}>{s.label}</div><div style={{ fontSize: 12, color: "var(--apple-text2)", marginTop: 2 }}>{s.time} · 点击查看大图</div></div>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={function(e){ e.stopPropagation(); showToast("已添加标注"); }} style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "rgba(0,122,255,0.08)", color: "var(--apple-blue)", cursor: "pointer", fontSize: 14 }}><i className="ri-edit-line"></i></button>
+                          <button onClick={function(e){ e.stopPropagation(); showToast("已下载截图"); }} style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "rgba(52,199,89,0.08)", color: "var(--apple-green)", cursor: "pointer", fontSize: 14 }}><i className="ri-download-line"></i></button>
+                        </div>
+                      </div>
+                    ); })}
+                  </div>
+                  <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 10, background: "rgba(255,149,0,0.06)", fontSize: 12, color: "var(--apple-text2)", display: "flex", alignItems: "center", gap: 6 }}><i className="ri-lightbulb-line" style={{ color: "var(--apple-orange)" }}></i> 截图可添加标注，自动关联当前议题</div>
+                </div>
+
+                {/* 实时字幕 */}
+                <div className="card-flat" style={{ padding: 28 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(52,199,89,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-green)", fontSize: 18 }}><i className="ri-closed-captioning-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>实时字幕</h3></div>
+                    {function() {
+                      var ccState = useState(true);
+                      var ccOn = ccState[0]; var setCc = ccState[1];
+                      return <button className={"apple-btn " + (ccOn ? "apple-btn-primary" : "apple-btn-secondary")} onClick={function(){ setCc(!ccOn); showToast(ccOn ? "字幕已关闭" : "字幕已开启"); }} style={{ padding: "8px 18px", fontSize: 14 }}><i className={ccOn ? "ri-eye-line" : "ri-eye-off-line"}></i> {ccOn ? "开启" : "关闭"}</button>;
+                    }()}
+                  </div>
+                  <div style={{ background: "#1d1d1f", borderRadius: 16, padding: 20, minHeight: 180, position: "relative", overflow: "hidden" }}>
+                    <div style={{ position: "absolute", top: 10, right: 12, display: "flex", gap: 6 }}>
+                      <span className="apple-pill" style={{ background: "rgba(255,59,48,0.3)", color: "#fff", fontSize: 10 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF3B30", animation: "fadeUp 1.5s infinite" }}></div> LIVE</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
+                      {[
+                        { name: "张三", color: "#5AC8FA", text: "我认为Q3应该优先投入用户增长模块，这是目前最大的瓶颈" },
+                        { name: "李四", color: "#BF5AF2", text: "技术侧可以支持，建议采用A/B测试的方式分阶段验证" },
+                        { name: "王五", color: "#FFCC00", text: "设计方面可以配合做几个增长实验的页面..." },
+                      ].map(function(c, i) { return (
+                        <div key={i} style={{ fontSize: 14, lineHeight: 1.6 }}>
+                          <span style={{ color: c.color, fontWeight: 600, marginRight: 8 }}>{c.name}</span>
+                          <span style={{ color: "rgba(255,255,255,0.9)" }}>{c.text}</span>
+                        </div>
+                      ); })}
+                      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}>
+                        <span style={{ color: "#5AC8FA", fontWeight: 600, marginRight: 8 }}>张三</span>
+                        <span>好的，那我们确定一下时间节<span style={{ animation: "fadeUp 0.8s infinite", display: "inline" }}>|</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                    <button className="apple-btn apple-btn-secondary" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("字幕语言已切换为中文"); }}><i className="ri-translate"></i> 中文</button>
+                    <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("字幕已复制到剪贴板"); }}><i className="ri-file-copy-line"></i> 复制</button>
+                    <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("字幕已保存为文档"); }}><i className="ri-save-line"></i> 保存</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 语音转纪要 */}
               <div className="card-flat" style={{ padding: 28 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,59,48,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-red)", fontSize: 18 }}><i className="ri-mic-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>语音转纪要</h3></div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>{recording && <span className="apple-pill pill-orange"><i className="ri-radio-button-line"></i> 录音中</span>}<button className={"apple-btn " + (recording ? "apple-btn-danger" : "apple-btn-primary")} onClick={toggleRecord}><i className={recording ? "ri-stop-circle-line" : "ri-play-circle-line"}></i> {recording ? "停止" : "开始录音"}</button></div>
                 </div>
-                <textarea className="apple-input" value={transcript} onChange={function(e){ setTranscript(e.target.value); }} placeholder="录音内容将显示在这里..." style={{ height: 200, resize: "none", fontFamily: "inherit" }} />
+                <textarea className="apple-input" value={transcript} onChange={function(e){ setTranscript(e.target.value); }} placeholder="录音内容将显示在这里..." style={{ height: 160, resize: "none", fontFamily: "inherit" }} />
                 <div style={{ marginTop: 14 }}><button className="apple-btn apple-btn-secondary" onClick={function(){ setTranscript("张三：今天的议题是Q3规划...\n李四：技术侧建议分两周迭代...\n王五：预算控制在50万以内..."); }}><i className="ri-robot-line"></i> 模拟AI转写</button></div>
               </div>
+
+              {/* 录制回放 */}
+              <div className="card-flat" style={{ padding: 28 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(175,82,222,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-purple)", fontSize: 18 }}><i className="ri-play-circle-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>录制回放</h3></div>
+                  <button className="apple-btn apple-btn-secondary" onClick={function(){ showToast("录制文件已下载"); }}><i className="ri-download-line"></i> 下载</button>
+                </div>
+                {function() {
+                  var playState = useState(false);
+                  var playing = playState[0]; var setPlaying = playState[1];
+                  var progressState = useState(35);
+                  var progress = progressState[0]; var setProgress = progressState[1];
+                  return (<div>
+                    {/* 播放器 */}
+                    <div style={{ background: "#1d1d1f", borderRadius: 16, overflow: "hidden" }}>
+                      <div style={{ padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: 64, height: 64, borderRadius: "50%", background: playing ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.3s" }} onClick={function(){ setPlaying(!playing); }}>
+                          <i className={playing ? "ri-pause-line" : "ri-play-fill"} style={{ fontSize: 32, color: "#fff", marginLeft: playing ? 0 : 4 }}></i>
+                        </div>
+                        <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 12 }}>产品规划评审会录制 · 1小时42分</div>
+                      </div>
+                      {/* 进度条 */}
+                      <div style={{ padding: "0 24px 20px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>
+                          <span>{Math.floor(progress * 102 / 100)}:{(progress * 62 % 60 < 10 ? "0" : "") + Math.floor(progress * 62 % 60)}</span>
+                          <span>1:42:00</span>
+                        </div>
+                        <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", cursor: "pointer", position: "relative" }} onClick={function(e){ var rect = e.currentTarget.getBoundingClientRect(); var pct = Math.round((e.clientX - rect.left) / rect.width * 100); setProgress(pct); }}>
+                          <div style={{ height: "100%", borderRadius: 2, background: "var(--apple-blue)", width: progress + "%", transition: "width 0.2s" }}></div>
+                          <div style={{ position: "absolute", top: -4, left: progress + "%", width: 12, height: 12, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", transform: "translateX(-50%)", transition: "left 0.2s" }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* 时间线标注 */}
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "var(--apple-text2)" }}>关键节点</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {[
+                          { time: "00:00", label: "会议开始 - 开场介绍", color: "#007AFF" },
+                          { time: "14:23", label: "产品路线图讨论", color: "#AF52DE" },
+                          { time: "32:15", label: "技术架构评审", color: "#34C759" },
+                          { time: "58:40", label: "预算分配讨论", color: "#FF9500" },
+                          { time: "1:28:00", label: "决议确认与总结", color: "#FF3B30" },
+                        ].map(function(m, i) { return (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 12, background: "#f5f5f7", cursor: "pointer" }} onClick={function(){ setProgress(parseInt(m.time.split(":")[0]) * 60 / 102 * 100); showToast("跳转到 " + m.time); }}>
+                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: m.color, flexShrink: 0 }}></div>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: m.color, fontFamily: "monospace", minWidth: 52 }}>{m.time}</span>
+                            <span style={{ fontSize: 13, color: "var(--apple-text2)" }}>{m.label}</span>
+                          </div>
+                        ); })}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
+                      <button className="apple-btn apple-btn-secondary" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("已生成AI摘要"); }}><i className="ri-magic-line"></i> AI摘要</button>
+                      <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("已分享给团队成员"); }}><i className="ri-share-line"></i> 分享</button>
+                      <button className="apple-btn apple-btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }} onClick={function(){ showToast("已导出为文档"); }}><i className="ri-file-text-line"></i> 导出纪要</button>
+                    </div>
+                  </div>);
+                }()}
+              </div>
+
+              {/* 议题进度 */}
               <div className="card-flat" style={{ padding: 28 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}><div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,122,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--apple-blue)", fontSize: 18 }}><i className="ri-progress-1-line"></i></div><h3 style={{ fontSize: 17, fontWeight: 600 }}>议题进度</h3></div>
                 {meeting.agenda.map(function(item, idx) { return (<div key={idx} style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}><input type="checkbox" style={{ width: 22, height: 22, accentColor: "var(--apple-blue)" }} /><span style={{ flex: 1, fontSize: 15 }}>{item}</span><span className="apple-pill pill-blue">进行中</span></div>); })}
